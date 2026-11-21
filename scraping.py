@@ -25,8 +25,24 @@ for article in soup.find_all("article", class_="product_pod"):
         "disponibilite": disponibilite,
     })
 
-# 4. Affichage des résultats[cite: 154]
-for livre in livres:
-    print(livre)
+# 4. enregistrement des résultats[cite: 154]
 
-print(f"\nNombre de livres récupérés : {len(livres)}")
+import csv
+import os
+from datetime import datetime
+
+fichier = "prix_livres.csv"
+date_collecte = datetime.now().isoformat(timespec="seconds")
+colonnes = ["date_collecte", "titre", "prix", "disponibilite"]
+
+# L'en-tête n'est écrit que si le fichier n'existe pas encore ou est vide
+ecrire_entete = not os.path.exists(fichier) or os.path.getsize(fichier) == 0
+
+with open(fichier, "a", newline="", encoding="utf-8") as f:
+    writer = csv.DictWriter(f, fieldnames=colonnes)
+    if ecrire_entete:
+        writer.writeheader()
+    for livre in livres:
+        writer.writerow({"date_collecte": date_collecte, **livre})
+
+print(f"{len(livres)} lignes ajoutées à {fichier}")
