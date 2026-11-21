@@ -1,30 +1,33 @@
 import requests
 from bs4 import BeautifulSoup
 
-url = "https://books.toscrape.com/"
+import time
+from urllib.parse import urljoin
 
-# 1. Envoi de la requête HTTP pour récupérer le code HTML de la page[cite: 126, 155]
-response = requests.get(url)
-response.raise_for_status()  # Vérifie que la requête a réussi (code 200)
-
-
-# 2. Analyse du HTML avec BeautifulSoup[cite: 126, 155]
-response.encoding = response.apparent_encoding
-soup = BeautifulSoup(response.text, "html.parser")
-
-# 3. Localisation et extraction des informations pour chaque livre[cite: 126, 152, 154]
+url = "https://books.toscrape.com/catalogue/page-1.html"
 livres = []
-for article in soup.find_all("article", class_="product_pod"):
-    titre = article.h3.a["title"]
-    prix = article.find("p", class_="price_color").text.strip()
-    disponibilite = article.find("p", class_="instock availability").text.strip()
 
-    livres.append({
-        "titre": titre,
-        "prix": prix,
-        "disponibilite": disponibilite,
-    })
+while url:
+    response = requests.get(url)
+    response.raise_for_status()
+    response.encoding = response.apparent_encoding
+    soup = BeautifulSoup(response.text, "html.parser")
 
+    for article in soup.find_all("article", class_="product_pod"):
+        titre = article.h3.a["title"]
+        prix = article.find("p", class_="price_color").text.strip()
+        disponibilite = article.find("p", class_="instock availability").text.strip()
+        livres.append({
+            "titre": titre,
+            "prix": prix,
+            "disponibilite": disponibilite,
+        })
+
+    # Lien vers la page suivante, absent sur la dernière page
+    suivant = soup.find("li", class_="next")
+    url = urljoin(url, suivant.a["href"]) if suivant else None
+
+    time.sleep(1)  # pause entre les requêtes pour ne pas surcharger le site
 # 4. enregistrement des résultats[cite: 154]
 
 import csv
